@@ -1,0 +1,106 @@
+name: Playwright SDD Tests (Local Runner)
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Suite de pruebas a ejecutar'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'login'
+          - 'home'
+          - 'vehiculos'
+          - 'ci:smoke'
+          - 'ci:report'
+      headed:
+        description: 'Ejecutar con navegador visible (headed)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    name: Ejecutar pruebas Playwright
+    timeout-minutes: 60
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        working-directory: PlaywrightSDD
+
+    env:
+      SIDO2_BASE_URL: ${{ secrets.SIDO2_BASE_URL }}
+      SIDO2_USERNAME: ${{ secrets.SIDO2_USERNAME }}
+      SIDO2_PASSWORD: ${{ secrets.SIDO2_PASSWORD }}
+      CI: true
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: PlaywrightSDD/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar navegador Chromium de Playwright
+        run: npx playwright install chromium
+
+      - name: Ejecutar pruebas
+        shell: bash
+        run: |
+          HEADED_FLAG=""
+          if [ "${{ github.event.inputs.headed }}" = "true" ]; then
+            HEADED_FLAG="--headed"
+          fi
+
+          SUITE="${{ github.event.inputs.test_suite }}"
+
+          case "$SUITE" in
+            "login")
+              npx playwright test tests/login.spec.js --project=chromium $HEADED_FLAG
+              ;;
+            "home")
+              npx playwright test tests/home.spec.js --project=chromium $HEADED_FLAG
+              ;;
+            "vehiculos")
+              npx playwright test tests/partesvehiculos.spec.js --project=chromium $HEADED_FLAG
+              ;;
+            "ci:smoke")
+              npm run ci:smoke
+              ;;
+            "ci:report")
+              npm run ci:report
+              ;;
+            *)
+              npx playwright test --project=chromium $HEADED_FLAG
+              ;;
+          esac
+
+      - name: Subir Reporte HTML de Playwright
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-html-report
+          path: PlaywrightSDD/playwright-report/
+          retention-days: 14
+
+      - name: Subir Evidencias (Screenshots, Videos y Traces)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-results
+          path: PlaywrightSDD/test-results/
+          retention-days: 14
