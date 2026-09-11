@@ -59,35 +59,31 @@ jobs:
         run: npx playwright install chromium
 
       - name: Ejecutar pruebas
-        shell: bash
+        shell: powershell
         run: |
-          HEADED_FLAG=""
-          if [ "${{ github.event.inputs.headed }}" = "true" ]; then
-            HEADED_FLAG="--headed"
-          fi
+          $headedFlag = if ("${{ github.event.inputs.headed }}" -eq "true") { "--headed" } else { "" }
+          $suite = "${{ github.event.inputs.test_suite }}"
 
-          SUITE="${{ github.event.inputs.test_suite }}"
-
-          case "$SUITE" in
-            "login")
-              npx playwright test tests/login.spec.js --project=chromium $HEADED_FLAG
-              ;;
-            "home")
-              npx playwright test tests/home.spec.js --project=chromium $HEADED_FLAG
-              ;;
-            "vehiculos")
-              npx playwright test tests/partesvehiculos.spec.js --project=chromium $HEADED_FLAG
-              ;;
-            "ci:smoke")
+          switch ($suite) {
+            "login" {
+              npx playwright test tests/login.spec.js --project=chromium $headedFlag
+            }
+            "home" {
+              npx playwright test tests/home.spec.js --project=chromium $headedFlag
+            }
+            "vehiculos" {
+              npx playwright test tests/partesvehiculos.spec.js --project=chromium $headedFlag
+            }
+            "ci:smoke" {
               npm run ci:smoke
-              ;;
-            "ci:report")
+            }
+            "ci:report" {
               npm run ci:report
-              ;;
-            *)
-              npx playwright test --project=chromium $HEADED_FLAG
-              ;;
-          esac
+            }
+            Default {
+              npx playwright test --project=chromium $headedFlag
+            }
+          }
 
       - name: Subir Reporte HTML de Playwright
         uses: actions/upload-artifact@v4
