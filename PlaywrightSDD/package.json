@@ -1,0 +1,19 @@
+{
+  "name": "playwright-sdd",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:home": "npx playwright test tests/home.spec.js --project=chromium",
+    "test:login": "npx playwright test tests/login.spec.js --project=chromium",
+    "test:vehiculos": "npx playwright test tests/partesvehiculos.spec.js --project=chromium",
+    "test:debug": "npx playwright test tests/login.spec.js --project=chromium --debug",
+    "ci:smoke": "npx playwright test --project=chromium --reporter=list",
+    "ci:report": "npx playwright test --project=chromium --reporter=line,html"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "dotenv": "^16.4.5"
+  }
+}

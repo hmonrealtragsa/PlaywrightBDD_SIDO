@@ -1,0 +1,168 @@
+{
+  "feature": "PartesVehiculos",
+  "scenarios": [
+    {
+      "name": "Cuando el user intenta rellenar el campo Actuacion y actividad sin haber rellenado previamente el campo vehículo aparece un warning",
+      "action": "warningNoVehiculo-km-part",
+      "when": "El usuario accede a Vehículos > El usuario intenta crear rellenar el campo Actuacion y Actividad sin rellenar Vehiculo",
+      "then": "Aparece un mensaje de warning avisando al usuario"
+    },
+    {
+      "name": "El usuario navega a Vehículos y comprueba que aparece Mis Partes de Vehículos",
+      "action": "vehicle-navigation",
+      "when": "El usuario navega a Vehículos",
+      "then": "Se comprueba que aparece Mis Partes de Vehículos"
+    },
+    {
+      "name": "El usuario abre el formulario Nuevo Parte Km desde Mis Partes de Vehículos",
+      "action": "new-km-part",
+      "when": "El usuario clicka en el button \"Nuevo Parte Km\"",
+      "then": "Se comprueba que se abre una ventana para añadir un parte de kilómetros"
+    },
+    {
+      "name": "El usuario pulsa en el button nuevo Repostaje y aparece una nueva ventana en la que se puede añadir un parte de repostaje",
+      "action": "new-fuel-recharge",
+      "when": "El usuario clicka en el button \"Nuevo Repostaje\"",
+      "then": "Se comprueba que se abre una ventana para añadir un parte de repostaje"
+    },
+    {
+      "name": "El usuario crea un parte diario de Repostaje",
+      "action": "create-repostaje-part",
+      "when": "El usuario navega a Mis Partes de Vehículos, pulsa en Nuevo Repostaje, selecciona la fecha de hoy, pulsa Registrar Datos, rellena cuenta km, combustible e importe, abre el selector de método de pago, elige Medio Propio y pulsa Enviar",
+      "data": {
+        "vehicle": "0010 LBH",
+        "date": "today",
+        "km": 1450,
+        "litros": 30,
+        "importe": 60,
+        "paymentMethod": "Medio propio"
+      },
+      "then": "Se cierra la ventana y aparece un mensaje indicando que el parte se ha creado correctamente"
+    },
+    {
+      "name": "El usuario pulsa en el button nuevo Peaje y aparece una nueva ventana en la que se puede añadir un parte de peaje",
+      "action": "new-peaje",
+      "when": "El usuario clicka en el button \"Nuevo Peaje\"",
+      "then": "Se comprueba que se abre una ventana para añadir un parte de peaje"
+    },
+    {
+      "name": "El usuario crea un parte diario de Peaje",
+      "action": "create-peaje-part",
+      "when": "El usuario navega a Mis Partes de Vehículos, pulsa en Nuevo Peaje, selecciona la fecha de hoy, pulsa Registrar Datos, rellena el recorrido, selecciona una hora, rellena el importe, clickade en el selector de método de pago y clicka en el button Medio Propio y pulsa Enviar",
+      "data": {
+        "vehicle": "0010 LBH",
+        "date": "today",
+        "recorrido": "Recorrido de prueba",
+        "hora": "09:00",
+        "importe": "12,50",
+        "paymentMethod": "Medio propio"
+      },
+      "then": "Se cierra la ventana y aparece un mensaje indicando que el parte se ha creado correctamente"
+    },
+    {
+      "name": "El usuario filtra los partes de vehículos por tipo Peaje",
+      "action": "filter-peaje-parts",
+      "when": "El usuario navega a Mis Partes de Vehículos y pulsa en el filtro de tipo Peaje",
+      "then": "En el listado solo aparecen tickets de tipo Peaje"
+    },
+    {
+      "name": "El usuario filtra los partes de vehículos por tipo Repostaje",
+      "action": "filter-repostaje-parts",
+      "when": "El usuario navega a Mis Partes de Vehículos y pulsa en el filtro de tipo Repostaje",
+      "then": "En el listado solo aparecen tickets de tipo Repostaje"
+    },
+    {
+      "name": "El usuario filtra los partes de vehículos por tipo Kilómetros",
+      "action": "filter-kilometros-parts",
+      "when": "El usuario navega a Mis Partes de Vehículos y pulsa en el filtro de tipo Kilómetros",
+      "then": "En el listado solo aparecen tickets de tipo Kilómetros"
+    },
+    {
+      "name": "El usuario filtra los partes de vehículos por estado Pendiente de Aprobar",
+      "action": "filter-pending-approval-parts",
+      "when": "El usuario navega a Mis Partes de Vehículos y pulsa en el filtro de estado Pendiente de Aprobar",
+      "then": "En el listado aparecen únicamente los partes correspondientes al contador de Pendiente de Aprobar"
+    },
+    {
+      "name": "El usuario filtra los partes de vehículos pulsando en el icono de Kilómetros",
+      "action": "filter-kilometros-summary-parts",
+      "when": "El usuario navega a Mis Partes de Vehículos y pulsa en el icono resumen de Kilómetros",
+      "then": "En el listado solo aparecen tickets de tipo Kilómetros"
+    },
+    {
+      "name": "El usuario filtra los partes de vehículos pulsando en el icono de Litros",
+      "action": "filter-litros-summary-parts",
+      "when": "El usuario navega a Mis Partes de Vehículos y pulsa en el icono resumen de Litros",
+      "then": "En el listado solo aparecen tickets de tipo Repostaje"
+    },
+    {
+      "name": "El usuario filtra los partes de vehículos pulsando en el icono de Peajes",
+      "action": "filter-peajes-summary-parts",
+      "when": "El usuario navega a Mis Partes de Vehículos y pulsa en el icono resumen de Peajes",
+      "then": "En el listado solo aparecen tickets de tipo Peaje"
+    },
+    {
+      "name": "El usuario genera un parte de kilometros",
+      "action": "new-km-part",
+      "when": "El usuario clicka en el button \"Nuevo Peaje\" y rellena el formulario seleccionando el vehiculo Royota land cruiser 5P, el dia actual, Gastos estructura TGTEC 00000902 - INFORMATICA GENERAL, actividad inicia-act.varios grupos(c.inicial), km inicial 10, km final 100, itinerario test y click enviar, seleccionar responsables actuacion iñigo perez de los cobos cassinello",
+      "then": "Se comprueba que se ha creado un nuevo parte en el que viene incluido la info anteriormente escrita"
+    },
+    {
+      "name": "Crear un parte de kilómetros desde Mis Partes de Vehículos",
+      "action": "create-km-part",
+      "when": "El usuario accede a Vehículos > Mis Partes de Vehículos, pulsa Nuevo Parte Km, selecciona el vehículo 0010 LBH - TOYOTA LAND CRUISER 5P y la actuación/actividad correspondiente, informa km inicial 10, km final 100, itinerario TEST y pulsa Enviar",
+      "and": [
+        "Si el sistema solicita destinatario, se selecciona el responsable sugerido y se confirma"
+      ],
+      "data": {
+        "vehicle": "0010 LBH",
+        "activity": "INFORMATICA GENERAL",
+        "date": "today",
+        "kmInicial": 10,
+        "kmFinal": 100,
+        "kmTotales": 90,
+        "itinerary": "TEST",
+        "startTime": "09:00",
+        "endTime": "10:00",
+        "recipient": "Perez De Los Cobos Cassinello, Iñigo"
+      },
+      "then": "Se muestra un mensaje de éxito de envío, se cierra el formulario y el parte creado aparece en la vista principal con 90 km y el vehículo seleccionado"
+    },
+    {
+      "name": "El usuario abre un parte de kilometros existentes y comprueba que se abre una ventana con los datos correctos",
+      "action": "open-km-part",
+      "when": "El usuario accede a Vehículos > Mis Partes de Vehículos y abre un parte de kilómetros existente",
+      "data": {
+        "vehicle": "0010 LBH",
+        "activity": "INFORMATICA GENERAL",
+        "date": "today",
+        "kmInicial": 10,
+        "kmFinal": 100,
+        "kmTotales": 90,
+        "itinerary": "TEST",
+        "startTime": "09:00",
+        "endTime": "10:00",
+        "recipient": "Perez De Los Cobos Cassinello, Iñigo"
+      },
+      "then": "El parte de kilómetros se abre en una ventana modal y los datos mostrados coinciden con los del parte creado previamente"
+    },
+    {
+      "name": "El usuario abre un parte de kilómetros existente y comprueba que puede eliminarlo",
+      "action": "delete-km-part",
+      "when": "El usuario accede a Vehículos > Mis Partes de Vehículos y abre un parte de kilómetros existente",
+      "data": {
+        "vehicle": "0010 LBH",
+        "activity": "INFORMATICA GENERAL",
+        "date": "today",
+        "kmInicial": 14,
+        "kmFinal": 114,
+        "kmTotales": 100,
+        "itinerary": "AUTO DELETE KM PART",
+        "startTime": "12:00",
+        "endTime": "13:00",
+        "recipient": "Perez De Los Cobos Cassinello, Iñigo"
+      },
+      "then": "El usuario pulsa el botón Eliminar, confirma la acción, aparece el aviso de eliminación correcta y el parte deja de mostrarse en Mis Partes de Vehículos"
+    }
+  ]
+}

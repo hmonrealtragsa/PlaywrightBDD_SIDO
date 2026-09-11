@@ -1,0 +1,37 @@
+name: Playwright SDD CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    env:
+      SIDO2_BASE_URL: ${{ secrets.SIDO2_BASE_URL }}
+      SIDO2_USERNAME: ${{ secrets.SIDO2_USERNAME }}
+      SIDO2_PASSWORD: ${{ secrets.SIDO2_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run login smoke test
+        run: npm run test:login

@@ -1,0 +1,47 @@
+{
+  "feature": "Home SIDO2",
+  "scenarios": [
+    {
+      "name": "El usuario abre el cuadrante mensual del mes actual",
+      "action": "open-current-month-quadrant",
+      "when": "El usuario realiza login y pulsa el botón Abrir Cuadrante del mes actual",
+      "then": "Se comprueba que se abre una nueva ventana del Cuadrante Mensual"
+    },
+    {
+      "name": "El usuario abre Horario Jornada desde el cuadrante mensual del mes actual",
+      "action": "open-current-month-workday-schedule",
+      "when": "El usuario navega a la home, pulsa el cuadrante del mes actual y después pulsa el botón Horario Jornada",
+      "then": "Se comprueba que aparece el texto Jornada realizada según los fichajes"
+    },
+    {
+      "name": "El usuario crea una nueva actuación desde el cuadrante mensual del mes actual",
+      "action": "create-current-month-actuation",
+      "when": "El usuario abre el cuadrante del mes actual, pulsa en Nueva Actuación, selecciona Todas, marca la primera opción y confirma el alta",
+      "then": "Se comprueba que debajo de Detalle por Actuación aparece la nueva actuación creada"
+    },
+    {
+      "name": "El usuario avanza los meses visibles de la home pulsando en el botón siguiente",
+      "action": "advance-home-months",
+      "when": "El usuario navega a la home y pulsa el botón \">\" del carrusel de meses",
+      "then": "Se comprueba que los meses visibles avanzan una posición y aparece el siguiente mes consecutivo"
+    },
+    {
+      "name": "El usuario retrocede los meses visibles de la home pulsando en el botón anterior",
+      "action": "go-back-home-months",
+      "when": "El usuario navega a la home y pulsa el botón \"<\" del carrusel de meses",
+      "then": "Se comprueba que los meses visibles retroceden una posición y aparecen los meses anteriores consecutivos"
+    },
+    {
+      "name": "El usuario abre la información de usuario desde la home",
+      "action": "open-user-info-drawer",
+      "when": "El usuario navega a home y pulsa en el icono del usuario",
+      "then": "Se comprueba que se abre una ventana con la información del usuario"
+    },
+    {
+      "name": "El usuario abre el cuadrante mensual desde la ficha de usuario en home",
+      "action": "open-user-monthly-quadrant-from-drawer",
+      "when": "El usuario navega a home, pulsa en el icono del usuario y después pulsa el icono de calendario",
+      "then": "Se comprueba que se abre una ventana con el cuadrante mensual del usuario"
+    }
+  ]
+}

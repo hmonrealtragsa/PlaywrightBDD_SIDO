@@ -1,0 +1,50 @@
+{
+  "feature": "Autenticación SIDO2",
+  "scenarios": [
+    {
+      "name": "El usuario navega correctamente a SIDO2",
+      "action": "login",
+      "given": {
+        "username": "hmonreal",
+        "password": "test"
+      },
+      "then": {
+        "expectedPathPattern": "/home|/dashboard|/inicio",
+        "successMessage": "Bienvenido"
+      }
+    },
+    {
+      "name": "El usuario se desloguea correctamente de SIDO2",
+      "action": "logout",
+      "given": {
+        "username": "hmonreal",
+        "password": "test"
+      },
+      "then": {
+        "expectedState": "login"
+      }
+    },
+    {
+      "name": "El usuario intenta loguearse con credenciales inválidas",
+      "action": "logout-invalid",
+      "given": {
+        "username": "usuario_invalido",
+        "password": "pass_invalida"
+      },
+      "then": {
+        "warningMessage": "Usuario y contraseña no válidos"
+      }
+    },
+    {
+      "name": "El usuario intenta loguearse sin contraseña y se marca el campo en rojo",
+      "action": "missing-password",
+      "given": {
+        "username": "test",
+        "password": ""
+      },
+      "then": {
+        "expectedState": "home"
+      }
+    }
+  ]
+}
