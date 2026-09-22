@@ -60,8 +60,11 @@ jobs:
       - name: Instalar navegador Chromium de Playwright
         run: npx playwright install chromium
 
-      - name: Ejecutar pruebas
+      - name: Ejecutar pruebas con JUnit
         shell: powershell
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: junit-results.xml
+          PLAYWRIGHT_JUNIT_OUTPUT_DIR: ${{ github.workspace }}\PlaywrightSDD\test-results
         run: |
           $headedFlag = if ("${{ github.event.inputs.headed }}" -eq "true") { "--headed" } else { "" }
           $suite = "${{ github.event.inputs.test_suite }}"
@@ -69,13 +72,13 @@ jobs:
 
           switch ($suite) {
             "login" {
-              npx playwright test tests/login.spec.js --project=chromium $headedFlag
+              npx playwright test tests/login.spec.js --project=chromium --reporter=junit,line $headedFlag
             }
             "home" {
-              npx playwright test tests/home.spec.js --project=chromium $headedFlag
+              npx playwright test tests/home.spec.js --project=chromium --reporter=junit,line $headedFlag
             }
             "vehiculos" {
-              npx playwright test tests/partesvehiculos.spec.js --project=chromium $headedFlag
+              npx playwright test tests/partesvehiculos.spec.js --project=chromium --reporter=junit,line $headedFlag
             }
             "ci:smoke" {
               npm run ci:smoke
@@ -84,35 +87,80 @@ jobs:
               npm run ci:report
             }
             Default {
-              npx playwright test --project=chromium $headedFlag
+              npx playwright test --project=chromium --reporter=junit,line $headedFlag
             }
           }
 
-      - name: Resumen del job (sin subir artefactos)
+      - name: Resumen de GitHub Actions
         if: always()
         shell: powershell
         run: |
-          $reportPath = "playwright-report"
-          $evidencePath = "test-results"
-          $lines = @(
+          $xmlPath = "${{ github.workspace }}\PlaywrightSDD\test-results\junit-results.xml"
+          $summary = @(
             "## Resultado de Playwright",
             "",
             "- Estado del job: ${{ job.status }}",
+            "- Evento: ${{ github.event_name }}",
             "- Suite: `${{ github.event.inputs.test_suite }}`",
-            "- Ejecutado en: `${{ github.event_name }}`"
+            "- XML: `$xmlPath`"
           )
 
-          if (Test-Path $reportPath) {
-            $lines += "- Reporte HTML generado en: `$PWD\\$reportPath`"
+          if (Test-Path $xmlPath) {
+            $summary += "- Archivo JUnit generado correctamente"
           } else {
-            $lines += "- No se encontró el directorio del reporte HTML: `$reportPath`"
+            $summary += "- No se encontró el archivo JUnit"
           }
 
-          if (Test-Path $evidencePath) {
-            $lines += "- Evidencias generadas en: `$PWD\\$evidencePath`"
-          } else {
-            $lines += "- No se encontraron evidencias en: `$evidencePath`"
-          }
+          $summary += ""
+          $summary += "> El reporte HTML de Playwright no se sube como artefacto para evitar el problema de Azure Blob en este runner self-hosted. Se deja un resumen en Summary y el XML de resultados para análisis."
 
-          $lines | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Resolver resumen desde JUnit
+        if: always()
+        shell: powershell
+        continue-on-error: true
+        run: |
+          $xmlPath = "${{ github.workspace }}\PlaywrightSDD\test-results\junit-results.xml"
+          if (-not (Test-Path $xmlPath)) { exit 0 }
+
+          [xml]$doc = Get-Content -Path $xmlPath
+          $tests = [int]$doc.testsuites.tests
+          $failures = [int]$doc.testsuites.failures
+          $skipped = [int]$doc.testsuites.skipped
+          $time = [double]$doc.testsuites.time
+
+          $summary = @(
+            "",
+            "### Resumen del XML JUnit",
+            "",
+            "- Tests: $tests",
+            "- Fallos: $failures",
+            "- Omitidos: $skipped",
+            "- Duración: $time s"
+          )
+
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Subir report HTML de Playwright (best effort)
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: playwright-html-report
+          path: PlaywrightSDD/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Subir resultados JUnit y evidencias (best effort)
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: playwright-junit-and-results
+          path: |
+            PlaywrightSDD/test-results/
+            PlaywrightSDD/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
 
