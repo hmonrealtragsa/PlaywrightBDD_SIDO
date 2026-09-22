@@ -59,7 +59,7 @@ jobs:
         run: npx playwright install chromium
 
       - name: Ejecutar pruebas
-        shell: pwsh
+        shell: powershell
         run: |
           $headedFlag = if ("${{ github.event.inputs.headed }}" -eq "true") { "--headed" } else { "" }
           $suite = "${{ github.event.inputs.test_suite }}"
