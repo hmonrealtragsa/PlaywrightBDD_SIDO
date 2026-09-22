@@ -85,9 +85,25 @@ jobs:
             }
           }
 
+      - name: Diagnostico de red y TLS
+        if: always()
+        shell: powershell
+        run: |
+          Write-Host "Variables relevantes:"
+          Get-ChildItem Env: | Where-Object {
+            $_.Name -match 'PROXY|NODE|SSL|TLS|GIT|ACTIONS'
+          } | Sort-Object Name | Format-Table -AutoSize
+
+          Write-Host ""
+          Write-Host "Prueba Node contra endpoints de Actions:"
+          node -e "require('https').get('https://github.com', r => { console.log('github.com -> ' + r.statusCode); process.exit(0); }).on('error', e => { console.error('github.com -> ' + e.message); process.exit(1); })"
+          node -e "require('https').get('https://pipelines.actions.githubusercontent.com', r => { console.log('pipelines.actions.githubusercontent.com -> ' + r.statusCode); process.exit(0); }).on('error', e => { console.error('pipelines.actions.githubusercontent.com -> ' + e.message); process.exit(1); })"
+          node -e "require('https').get('https://results-receiver.actions.githubusercontent.com', r => { console.log('results-receiver.actions.githubusercontent.com -> ' + r.statusCode); process.exit(0); }).on('error', e => { console.error('results-receiver.actions.githubusercontent.com -> ' + e.message); process.exit(1); })"
+
       - name: Subir Reporte HTML de Playwright
         uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: playwright-html-report
           path: PlaywrightSDD/playwright-report/
@@ -96,6 +112,7 @@ jobs:
       - name: Subir Evidencias (Screenshots, Videos y Traces)
         uses: actions/upload-artifact@v4
         if: failure()
+        continue-on-error: true
         with:
           name: playwright-test-results
           path: PlaywrightSDD/test-results/
