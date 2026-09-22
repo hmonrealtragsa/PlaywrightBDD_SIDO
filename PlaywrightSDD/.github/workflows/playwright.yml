@@ -1,12 +1,10 @@
 name: Playwright SDD Tests (Local Runner)
 
 on:
-  schedule:
-    - cron: '30 6 * * 1-5'  # Lunes a viernes 08:30 CEST (UTC+2)
   push:
-    branches: [ main, master ]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, develop ]
   workflow_dispatch:
     inputs:
       test_suite:
@@ -33,21 +31,38 @@ jobs:
     timeout-minutes: 60
     runs-on: self-hosted
 
+    defaults:
+      run:
+        working-directory: PlaywrightSDD
+
     env:
       SIDO2_BASE_URL: ${{ secrets.SIDO2_BASE_URL }}
       SIDO2_USERNAME: ${{ secrets.SIDO2_USERNAME }}
       SIDO2_PASSWORD: ${{ secrets.SIDO2_PASSWORD }}
       CI: true
+      NODE_OPTIONS: --use-openssl-ca
 
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
+
+      - name: Configurar CA del runner para Node
+        shell: powershell
+        run: |
+          $certPath = "${{ vars.NODE_EXTRA_CA_CERTS }}"
+          if ($certPath) {
+            if (-not (Test-Path $certPath)) {
+              throw "La variable NODE_EXTRA_CA_CERTS apunta a un certificado que no existe: $certPath"
+            }
+            "NODE_EXTRA_CA_CERTS=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'npm'
+          cache-dependency-path: PlaywrightSDD/package-lock.json
 
       - name: Instalar dependencias
         run: npm ci
@@ -60,7 +75,6 @@ jobs:
         run: |
           $headedFlag = if ("${{ github.event.inputs.headed }}" -eq "true") { "--headed" } else { "" }
           $suite = "${{ github.event.inputs.test_suite }}"
-          if ([string]::IsNullOrWhiteSpace($suite)) { $suite = "all" }
 
           switch ($suite) {
             "login" {
@@ -83,31 +97,21 @@ jobs:
             }
           }
 
-      - name: Resumen del job (sin subir artefactos)
+      - name: Subir Reporte HTML de Playwright
+        uses: actions/upload-artifact@v4
         if: always()
-        shell: powershell
-        run: |
-          $reportPath = "playwright-report"
-          $evidencePath = "test-results"
-          $lines = @(
-            "## Resultado de Playwright",
-            "",
-            "- Estado del job: ${{ job.status }}",
-            "- Suite: `${{ github.event.inputs.test_suite }}`",
-            "- Ejecutado en: `${{ github.event_name }}`"
-          )
+        continue-on-error: true
+        with:
+          name: playwright-html-report
+          path: PlaywrightSDD/playwright-report/
+          retention-days: 14
 
-          if (Test-Path $reportPath) {
-            $lines += "- Reporte HTML generado en: `$PWD\\$reportPath`"
-          } else {
-            $lines += "- No se encontró el directorio del reporte HTML: `$reportPath`"
-          }
-
-          if (Test-Path $evidencePath) {
-            $lines += "- Evidencias generadas en: `$PWD\\$evidencePath`"
-          } else {
-            $lines += "- No se encontraron evidencias en: `$evidencePath`"
-          }
-
-          $lines | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+      - name: Subir Evidencias (Screenshots, Videos y Traces)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        continue-on-error: true
+        with:
+          name: playwright-test-results
+          path: PlaywrightSDD/test-results/
+          retention-days: 14
 
