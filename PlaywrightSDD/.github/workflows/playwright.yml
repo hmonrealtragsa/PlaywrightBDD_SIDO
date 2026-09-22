@@ -36,15 +36,27 @@ jobs:
       SIDO2_USERNAME: ${{ secrets.SIDO2_USERNAME }}
       SIDO2_PASSWORD: ${{ secrets.SIDO2_PASSWORD }}
       CI: true
+      NODE_OPTIONS: --use-openssl-ca
 
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
+      - name: Configurar CA del runner para Node
+        shell: powershell
+        run: |
+          $certPath = "${{ vars.NODE_EXTRA_CA_CERTS }}"
+          if ($certPath) {
+            if (-not (Test-Path $certPath)) {
+              throw "La variable NODE_EXTRA_CA_CERTS apunta a un certificado que no existe: $certPath"
+            }
+            "NODE_EXTRA_CA_CERTS=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Instalar dependencias
@@ -83,6 +95,7 @@ jobs:
       - name: Subir Reporte HTML de Playwright
         uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: playwright-html-report
           path: playwright-report/
@@ -91,6 +104,7 @@ jobs:
       - name: Subir Evidencias (Screenshots, Videos y Traces)
         uses: actions/upload-artifact@v4
         if: failure()
+        continue-on-error: true
         with:
           name: playwright-test-results
           path: test-results/
