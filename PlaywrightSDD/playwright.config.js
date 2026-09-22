@@ -3,6 +3,11 @@ const { defineConfig, devices } = require('@playwright/test');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const baseURL = process.env.SIDO2_BASE_URL || 'https://sido2-demo.example.com';
+const reporters = [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]];
+
+if (process.env.PLAYWRIGHT_JSON_SUMMARY === 'true') {
+  reporters.push(['json', { outputFile: 'test-results/results.json' }]);
+}
 
 module.exports = defineConfig({
   testDir: './tests',
@@ -12,7 +17,7 @@ module.exports = defineConfig({
     timeout: 8_000,
   },
   fullyParallel: false,
-  reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
+  reporter: reporters,
   use: {
     baseURL,
     headless: true,

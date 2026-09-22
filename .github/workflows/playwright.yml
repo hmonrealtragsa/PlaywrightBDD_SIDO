@@ -37,6 +37,7 @@ jobs:
       SIDO2_PASSWORD: ${{ secrets.SIDO2_PASSWORD }}
       CI: true
       NODE_EXTRA_CA_CERTS: ${{ vars.NODE_EXTRA_CA_CERTS }}
+      PLAYWRIGHT_JSON_SUMMARY: 'true'
 
     steps:
       - name: Validar certificado adicional de Node
@@ -97,18 +98,107 @@ jobs:
             }
           }
 
+      - name: Publicar resumen de ejecucion
+        if: ${{ always() && (steps.ejecutar_pruebas.outcome == 'success' || steps.ejecutar_pruebas.outcome == 'failure') }}
+        shell: powershell
+        working-directory: PlaywrightSDD
+        run: |
+          $resultsPath = Join-Path (Get-Location) 'test-results\results.json'
+          if (-not (Test-Path $resultsPath)) {
+            "## Resumen de Playwright" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+            "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+            "No se ha encontrado el fichero de resultados JSON en `test-results/results.json`." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+            exit 0
+          }
+
+          $report = Get-Content $resultsPath -Raw | ConvertFrom-Json
+          $tests = New-Object System.Collections.Generic.List[object]
+
+          function Get-TestStatus($test) {
+            if ($null -ne $test.outcome) {
+              switch ($test.outcome) {
+                'expected' {
+                  if ($test.results | Where-Object { $_.status -eq 'passed' }) { return 'passed' }
+                  if ($test.results | Where-Object { $_.status -eq 'skipped' }) { return 'skipped' }
+                  return 'passed'
+                }
+                'flaky' { return 'flaky' }
+                'skipped' { return 'skipped' }
+                'unexpected' { return 'failed' }
+              }
+            }
+
+            if ($test.results | Where-Object { $_.status -in @('failed', 'timedOut', 'interrupted') }) { return 'failed' }
+            if ($test.results | Where-Object { $_.status -eq 'passed' }) { return 'passed' }
+            if ($test.results | Where-Object { $_.status -eq 'skipped' }) { return 'skipped' }
+            return 'unknown'
+          }
+
+          function Add-TestsFromSuite($suite, $titles) {
+            $currentTitles = @($titles)
+            if ($suite.title) {
+              $currentTitles += $suite.title
+            }
+
+            if ($suite.specs) {
+              foreach ($spec in $suite.specs) {
+                $specTitles = @($currentTitles)
+                if ($spec.title) {
+                  $specTitles += $spec.title
+                }
+
+                foreach ($test in $spec.tests) {
+                  $project = if ($test.projectName) { " [$($test.projectName)]" } else { '' }
+                  $tests.Add([pscustomobject]@{
+                    Title = (($specTitles | Where-Object { $_ }) -join ' > ') + $project
+                    Status = Get-TestStatus $test
+                  }) | Out-Null
+                }
+              }
+            }
+
+            if ($suite.suites) {
+              foreach ($childSuite in $suite.suites) {
+                Add-TestsFromSuite $childSuite $currentTitles
+              }
+            }
+          }
+
+          foreach ($suite in $report.suites) {
+            Add-TestsFromSuite $suite @()
+          }
+
+          $passed = @($tests | Where-Object { $_.Status -eq 'passed' }).Count
+          $failed = @($tests | Where-Object { $_.Status -eq 'failed' }).Count
+          $flaky = @($tests | Where-Object { $_.Status -eq 'flaky' }).Count
+          $skipped = @($tests | Where-Object { $_.Status -eq 'skipped' }).Count
+          $total = $tests.Count
+
+          "## Resumen de Playwright" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          "| Total | OK | Fallidos | Flaky | Omitidos |" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          "| --- | ---: | ---: | ---: | ---: |" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          "| $total | $passed | $failed | $flaky | $skipped |" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          "### Tests ejecutados" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+          foreach ($test in $tests) {
+            switch ($test.Status) {
+              'passed' { $icon = 'OK' }
+              'failed' { $icon = 'KO' }
+              'flaky' { $icon = 'FLAKY' }
+              'skipped' { $icon = 'SKIP' }
+              default { $icon = 'INFO' }
+            }
+
+            "- [$icon] $($test.Title)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          }
+
       - name: Subir Reporte HTML de Playwright
         uses: actions/upload-artifact@v4
         if: ${{ always() && (steps.ejecutar_pruebas.outcome == 'success' || steps.ejecutar_pruebas.outcome == 'failure') }}
         with:
           name: playwright-html-report
           path: PlaywrightSDD/playwright-report/
-          retention-days: 14
-
-      - name: Subir Evidencias (Screenshots, Videos y Traces)
-        uses: actions/upload-artifact@v4
-        if: ${{ failure() && steps.ejecutar_pruebas.outcome == 'failure' }}
-        with:
-          name: playwright-test-results
-          path: PlaywrightSDD/test-results/
           retention-days: 14
