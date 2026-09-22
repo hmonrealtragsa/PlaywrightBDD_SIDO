@@ -150,9 +150,8 @@ jobs:
                 }
 
                 foreach ($test in $spec.tests) {
-                  $project = if ($test.projectName) { " [$($test.projectName)]" } else { '' }
                   $tests.Add([pscustomobject]@{
-                    Title = (($specTitles | Where-Object { $_ }) -join ' > ') + $project
+                    Title = (($specTitles | Where-Object { $_ }) -join ' > ')
                     Status = Get-TestStatus $test
                   }) | Out-Null
                 }
@@ -175,26 +174,27 @@ jobs:
           $flaky = @($tests | Where-Object { $_.Status -eq 'flaky' }).Count
           $skipped = @($tests | Where-Object { $_.Status -eq 'skipped' }).Count
           $total = $tests.Count
+          $passRate = if ($total -gt 0) { [math]::Round(($passed / $total) * 100, 2) } else { 0 }
 
           $lines.Add("## Resumen de Playwright") | Out-Null
           $lines.Add("") | Out-Null
-          $lines.Add("| Total | OK | Fallidos | Flaky | Omitidos |") | Out-Null
-          $lines.Add("| --- | ---: | ---: | ---: | ---: |") | Out-Null
-          $lines.Add("| $total | $passed | $failed | $flaky | $skipped |") | Out-Null
+          $lines.Add("| Total | OK | Fallidos | % OK | Flaky | Omitidos |") | Out-Null
+          $lines.Add("| --- | ---: | ---: | ---: | ---: | ---: |") | Out-Null
+          $lines.Add("| $total | $passed | $failed | $passRate% | $flaky | $skipped |") | Out-Null
           $lines.Add("") | Out-Null
           $lines.Add("### Tests ejecutados") | Out-Null
           $lines.Add("") | Out-Null
 
           foreach ($test in $tests) {
             switch ($test.Status) {
-              'passed' { $icon = ':white_check_mark:' }
-              'failed' { $icon = ':x:' }
-              'flaky' { $icon = ':warning:' }
-              'skipped' { $icon = ':fast_forward:' }
-              default { $icon = ':information_source:' }
+              'passed' { $label = 'Test OK'; $icon = ':white_check_mark:' }
+              'failed' { $label = 'Test KO'; $icon = ':x:' }
+              'flaky' { $label = 'Test FLAKY'; $icon = ':warning:' }
+              'skipped' { $label = 'Test SKIP'; $icon = ':fast_forward:' }
+              default { $label = 'Test INFO'; $icon = ':information_source:' }
             }
 
-            $lines.Add("- $icon $($test.Title)") | Out-Null
+            $lines.Add("- $label $icon $($test.Title)") | Out-Null
           }
 
           [System.IO.File]::AppendAllText($env:GITHUB_STEP_SUMMARY, (($lines -join "`n") + "`n"), $utf8NoBom)
