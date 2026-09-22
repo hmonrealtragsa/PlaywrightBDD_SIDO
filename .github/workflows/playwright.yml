@@ -150,8 +150,10 @@ jobs:
                 }
 
                 foreach ($test in $spec.tests) {
+                  $title = (($specTitles | Where-Object { $_ }) -join ' > ')
+                  $title = $title -replace '^[^>]+\.spec\.js\s*>\s*', ''
                   $tests.Add([pscustomobject]@{
-                    Title = (($specTitles | Where-Object { $_ }) -join ' > ')
+                    Title = $title
                     Status = Get-TestStatus $test
                   }) | Out-Null
                 }
@@ -175,12 +177,13 @@ jobs:
           $skipped = @($tests | Where-Object { $_.Status -eq 'skipped' }).Count
           $total = $tests.Count
           $passRate = if ($total -gt 0) { [math]::Round(($passed / $total) * 100, 2) } else { 0 }
+          $failRate = if ($total -gt 0) { [math]::Round(($failed / $total) * 100, 2) } else { 0 }
 
           $lines.Add("## Resumen de Playwright") | Out-Null
           $lines.Add("") | Out-Null
-          $lines.Add("| Total | OK | Fallidos | % OK | Flaky | Omitidos |") | Out-Null
-          $lines.Add("| --- | ---: | ---: | ---: | ---: | ---: |") | Out-Null
-          $lines.Add("| $total | $passed | $failed | $passRate% | $flaky | $skipped |") | Out-Null
+          $lines.Add("| Total | OK | Fallidos | % OK | % Fail |") | Out-Null
+          $lines.Add("| --- | ---: | ---: | ---: | ---: |") | Out-Null
+          $lines.Add("| $total | $passed | $failed | $passRate% | $failRate% |") | Out-Null
           $lines.Add("") | Out-Null
           $lines.Add("### Tests ejecutados") | Out-Null
           $lines.Add("") | Out-Null
