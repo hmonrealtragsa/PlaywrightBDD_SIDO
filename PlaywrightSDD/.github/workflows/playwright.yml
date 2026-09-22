@@ -40,7 +40,6 @@ jobs:
       SIDO2_USERNAME: ${{ secrets.SIDO2_USERNAME }}
       SIDO2_PASSWORD: ${{ secrets.SIDO2_PASSWORD }}
       CI: true
-      NODE_OPTIONS: --use-openssl-ca
       NODE_EXTRA_CA_CERTS: ${{ vars.NODE_EXTRA_CA_CERTS }}
 
     steps:
@@ -72,6 +71,7 @@ jobs:
         run: npx playwright install chromium
 
       - name: Ejecutar pruebas
+        id: ejecutar_pruebas
         shell: powershell
         run: |
           $headedFlag = if ("${{ github.event.inputs.headed }}" -eq "true") { "--headed" } else { "" }
@@ -100,7 +100,7 @@ jobs:
 
       - name: Subir Reporte HTML de Playwright
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && (steps.ejecutar_pruebas.outcome == 'success' || steps.ejecutar_pruebas.outcome == 'failure') }}
         with:
           name: playwright-html-report
           path: PlaywrightSDD/playwright-report/
@@ -108,7 +108,7 @@ jobs:
 
       - name: Subir Evidencias (Screenshots, Videos y Traces)
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: ${{ failure() && steps.ejecutar_pruebas.outcome == 'failure' }}
         with:
           name: playwright-test-results
           path: PlaywrightSDD/test-results/
