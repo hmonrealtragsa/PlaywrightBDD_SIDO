@@ -31,10 +31,6 @@ jobs:
     timeout-minutes: 60
     runs-on: self-hosted
 
-    defaults:
-      run:
-        working-directory: PlaywrightSDD
-
     env:
       SIDO2_BASE_URL: ${{ secrets.SIDO2_BASE_URL }}
       SIDO2_USERNAME: ${{ secrets.SIDO2_USERNAME }}
@@ -65,14 +61,17 @@ jobs:
           cache-dependency-path: PlaywrightSDD/package-lock.json
 
       - name: Instalar dependencias
+        working-directory: PlaywrightSDD
         run: npm ci
 
       - name: Instalar navegador Chromium de Playwright
+        working-directory: PlaywrightSDD
         run: npx playwright install chromium
 
       - name: Ejecutar pruebas
         id: ejecutar_pruebas
         shell: powershell
+        working-directory: PlaywrightSDD
         run: |
           $headedFlag = if ("${{ github.event.inputs.headed }}" -eq "true") { "--headed" } else { "" }
           $suite = "${{ github.event.inputs.test_suite }}"
