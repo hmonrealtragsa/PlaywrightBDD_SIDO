@@ -40,7 +40,6 @@ jobs:
       SIDO2_USERNAME: ${{ secrets.SIDO2_USERNAME }}
       SIDO2_PASSWORD: ${{ secrets.SIDO2_PASSWORD }}
       CI: true
-      NODE_OPTIONS: --use-openssl-ca
 
     steps:
       - name: Descargar repositorio
@@ -49,7 +48,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: 'npm'
           cache-dependency-path: PlaywrightSDD/package-lock.json
 
@@ -60,36 +59,39 @@ jobs:
         run: npx playwright install chromium
 
       - name: Ejecutar pruebas
-        shell: powershell
+        shell: bash
         run: |
-          $headedFlag = if ("${{ github.event.inputs.headed }}" -eq "true") { "--headed" } else { "" }
-          $suite = "${{ github.event.inputs.test_suite }}"
+          HEADED_FLAG=""
+          if [ "${{ github.event.inputs.headed }}" = "true" ]; then
+            HEADED_FLAG="--headed"
+          fi
 
-          switch ($suite) {
-            "login" {
-              npx playwright test tests/login.spec.js --project=chromium $headedFlag
-            }
-            "home" {
-              npx playwright test tests/home.spec.js --project=chromium $headedFlag
-            }
-            "vehiculos" {
-              npx playwright test tests/partesvehiculos.spec.js --project=chromium $headedFlag
-            }
-            "ci:smoke" {
+          SUITE="${{ github.event.inputs.test_suite }}"
+
+          case "$SUITE" in
+            "login")
+              npx playwright test tests/login.spec.js --project=chromium $HEADED_FLAG
+              ;;
+            "home")
+              npx playwright test tests/home.spec.js --project=chromium $HEADED_FLAG
+              ;;
+            "vehiculos")
+              npx playwright test tests/partesvehiculos.spec.js --project=chromium $HEADED_FLAG
+              ;;
+            "ci:smoke")
               npm run ci:smoke
-            }
-            "ci:report" {
+              ;;
+            "ci:report")
               npm run ci:report
-            }
-            Default {
-              npx playwright test --project=chromium $headedFlag
-            }
-          }
+              ;;
+            *)
+              npx playwright test --project=chromium $HEADED_FLAG
+              ;;
+          esac
 
       - name: Subir Reporte HTML de Playwright
         uses: actions/upload-artifact@v4
         if: always()
-        continue-on-error: true
         with:
           name: playwright-html-report
           path: PlaywrightSDD/playwright-report/
@@ -98,9 +100,7 @@ jobs:
       - name: Subir Evidencias (Screenshots, Videos y Traces)
         uses: actions/upload-artifact@v4
         if: failure()
-        continue-on-error: true
         with:
           name: playwright-test-results
           path: PlaywrightSDD/test-results/
           retention-days: 14
-
