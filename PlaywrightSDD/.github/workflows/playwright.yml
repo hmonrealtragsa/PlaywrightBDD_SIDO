@@ -41,21 +41,10 @@ jobs:
       SIDO2_PASSWORD: ${{ secrets.SIDO2_PASSWORD }}
       CI: true
       NODE_OPTIONS: --use-openssl-ca
-      NODE_EXTRA_CA_CERTS: ${{ vars.NODE_EXTRA_CA_CERTS }}
 
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
-
-      - name: Validar CA del runner para Node
-        shell: powershell
-        run: |
-          $certPath = $env:NODE_EXTRA_CA_CERTS
-          if ($certPath) {
-            if (-not (Test-Path $certPath)) {
-              throw "La variable NODE_EXTRA_CA_CERTS apunta a un certificado que no existe: $certPath"
-            }
-          }
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4

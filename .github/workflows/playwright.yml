@@ -46,17 +46,6 @@ jobs:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Configurar CA del runner para Node
-        shell: powershell
-        run: |
-          $certPath = "${{ vars.NODE_EXTRA_CA_CERTS }}"
-          if ($certPath) {
-            if (-not (Test-Path $certPath)) {
-              throw "La variable NODE_EXTRA_CA_CERTS apunta a un certificado que no existe: $certPath"
-            }
-            "NODE_EXTRA_CA_CERTS=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          }
-
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
