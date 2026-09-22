@@ -86,20 +86,22 @@ jobs:
           }
 
       - name: Subir Reporte HTML de Playwright
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: always()
         continue-on-error: true
         with:
           name: playwright-html-report
           path: PlaywrightSDD/playwright-report/
+          if-no-files-found: ignore
           retention-days: 14
 
       - name: Subir Evidencias (Screenshots, Videos y Traces)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: failure()
         continue-on-error: true
         with:
           name: playwright-test-results
           path: PlaywrightSDD/test-results/
+          if-no-files-found: ignore
           retention-days: 14
 
