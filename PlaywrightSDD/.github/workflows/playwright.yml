@@ -81,7 +81,7 @@ jobs:
           }
 
       - name: Subir Reporte HTML de Playwright
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         continue-on-error: true
         with:
@@ -91,7 +91,7 @@ jobs:
           retention-days: 14
 
       - name: Subir Evidencias (Screenshots, Videos y Traces)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         continue-on-error: true
         with:
