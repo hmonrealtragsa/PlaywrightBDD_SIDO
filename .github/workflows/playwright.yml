@@ -1,6 +1,9 @@
 name: Playwright SDD Tests (Local Runner)
 
 on:
+  schedule:
+    - cron: '0 9 * * 1-5'
+    - cron: '0 10 * * 1-5'
   pull_request:
     branches: [ main, master, develop ]
   workflow_dispatch:
